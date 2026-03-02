@@ -2,10 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { collection, addDoc, getDocs, orderBy, query, Timestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, orderBy, query, Timestamp, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/providers/AuthProvider";
 import Sidebar from "@/components/Sidebar";
+
+const PERFORMANCE_COLOR_OPTIONS = [
+  { key: "red",    label: "빨", swatch: "bg-red-500" },
+  { key: "orange", label: "주", swatch: "bg-orange-500" },
+  { key: "yellow", label: "노", swatch: "bg-yellow-400" },
+  { key: "green",  label: "초", swatch: "bg-green-500" },
+  { key: "blue",   label: "파", swatch: "bg-blue-500" },
+  { key: "indigo", label: "남", swatch: "bg-indigo-500" },
+  { key: "violet", label: "보", swatch: "bg-violet-500" },
+];
 
 interface Performance {
   id: string;
@@ -13,6 +23,7 @@ interface Performance {
   startDate: string;
   endDate: string;
   venue: string;
+  color?: string;
 }
 
 export default function RegisterConcertPage() {
@@ -24,10 +35,12 @@ export default function RegisterConcertPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [venue, setVenue] = useState("");
+  const [selectedColor, setSelectedColor] = useState("red");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [performances, setPerformances] = useState<Performance[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && profile && profile.email !== "dhdbs200@gmail.com") {
@@ -53,6 +66,33 @@ export default function RegisterConcertPage() {
     );
   }
 
+  const resetForm = () => {
+    setTitle("");
+    setStartDate("");
+    setEndDate("");
+    setVenue("");
+    setSelectedColor("red");
+    setSaved(false);
+    setError(null);
+  };
+
+  const handleEdit = (p: Performance) => {
+    setEditingId(p.id);
+    setTitle(p.title);
+    setStartDate(p.startDate);
+    setEndDate(p.endDate);
+    setVenue(p.venue);
+    setSelectedColor(p.color || "red");
+    setSaved(false);
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    resetForm();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !startDate || !endDate || !venue) {
@@ -68,23 +108,35 @@ export default function RegisterConcertPage() {
     setError(null);
 
     try {
-      const ref = await addDoc(collection(db, "performances"), {
-        title,
-        startDate,
-        endDate,
-        venue,
-        createdAt: Timestamp.now(),
-        createdBy: user!.uid,
-      });
-      const newItem: Performance = { id: ref.id, title, startDate, endDate, venue };
-      setPerformances((prev) =>
-        [newItem, ...prev].sort((a, b) => b.startDate.localeCompare(a.startDate))
-      );
+      if (editingId) {
+        await updateDoc(doc(db, "performances", editingId), {
+          title, startDate, endDate, venue, color: selectedColor,
+        });
+        setPerformances((prev) =>
+          prev.map((p) =>
+            p.id === editingId
+              ? { ...p, title, startDate, endDate, venue, color: selectedColor }
+              : p
+          )
+        );
+        setEditingId(null);
+      } else {
+        const ref = await addDoc(collection(db, "performances"), {
+          title,
+          startDate,
+          endDate,
+          venue,
+          color: selectedColor,
+          createdAt: Timestamp.now(),
+          createdBy: user!.uid,
+        });
+        const newItem: Performance = { id: ref.id, title, startDate, endDate, venue, color: selectedColor };
+        setPerformances((prev) =>
+          [newItem, ...prev].sort((a, b) => b.startDate.localeCompare(a.startDate))
+        );
+      }
       setSaved(true);
-      setTitle("");
-      setStartDate("");
-      setEndDate("");
-      setVenue("");
+      resetForm();
     } catch (err: any) {
       setError(err.message || "저장 실패");
     } finally {
@@ -118,6 +170,19 @@ export default function RegisterConcertPage() {
 
       <main className="mx-auto w-full max-w-xl px-6 py-8">
         <form onSubmit={handleSubmit} className="space-y-4">
+          {editingId && (
+            <div className="flex items-center justify-between rounded-xl bg-blue-50 px-4 py-3 dark:bg-blue-500/10">
+              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">공연 수정 중</span>
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+              >
+                취소
+              </button>
+            </div>
+          )}
+
           {/* 공연명 */}
           <div>
             <label className="mb-1.5 block text-xs font-bold text-zinc-500 dark:text-zinc-400">
@@ -168,6 +233,27 @@ export default function RegisterConcertPage() {
             />
           </div>
 
+          {/* 색상 */}
+          <div>
+            <label className="mb-1.5 block text-xs font-bold text-zinc-500 dark:text-zinc-400">
+              뱃지 색상
+            </label>
+            <div className="flex gap-2">
+              {PERFORMANCE_COLOR_OPTIONS.map(({ key, swatch }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => { setSelectedColor(key); setSaved(false); }}
+                  className={`h-9 w-9 rounded-full transition-all active:scale-95 ${swatch} ${
+                    selectedColor === key
+                      ? "ring-2 ring-offset-2 ring-zinc-900 dark:ring-white dark:ring-offset-zinc-950"
+                      : "opacity-60 hover:opacity-100"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
           {/* 에러 */}
           {error && (
             <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
@@ -178,7 +264,7 @@ export default function RegisterConcertPage() {
           {/* 저장 완료 */}
           {saved && (
             <div className="rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-bold text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
-              공연이 등록되었어요!
+              {editingId ? "수정되었어요!" : "공연이 등록되었어요!"}
             </div>
           )}
 
@@ -187,9 +273,10 @@ export default function RegisterConcertPage() {
             disabled={saving}
             className="w-full rounded-2xl bg-rose-500 py-3.5 text-sm font-bold text-white transition-all hover:bg-rose-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {saving ? "등록 중..." : "공연 등록하기"}
+            {saving ? "저장 중..." : editingId ? "공연 수정하기" : "공연 등록하기"}
           </button>
         </form>
+
         {/* 공연 목록 */}
         {performances.length > 0 && (
           <div className="mt-10">
@@ -197,18 +284,31 @@ export default function RegisterConcertPage() {
               등록된 공연 ({performances.length})
             </h2>
             <div className="space-y-2">
-              {performances.map((p) => (
-                <div
-                  key={p.id}
-                  className="rounded-xl bg-white px-4 py-3 shadow-sm dark:bg-zinc-900"
-                >
-                  <p className="font-semibold text-zinc-900 dark:text-white">{p.title}</p>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    {p.startDate} ~ {p.endDate}
-                  </p>
-                  <p className="text-xs text-zinc-400">{p.venue}</p>
-                </div>
-              ))}
+              {performances.map((p) => {
+                const colorOption = PERFORMANCE_COLOR_OPTIONS.find((c) => c.key === p.color);
+                return (
+                  <div
+                    key={p.id}
+                    className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm dark:bg-zinc-900"
+                  >
+                    <div className={`h-4 w-4 shrink-0 rounded-full ${colorOption?.swatch || "bg-zinc-300"}`} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-zinc-900 dark:text-white">{p.title}</p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {p.startDate} ~ {p.endDate}
+                      </p>
+                      <p className="text-xs text-zinc-400">{p.venue}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(p)}
+                      className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white"
+                    >
+                      수정
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

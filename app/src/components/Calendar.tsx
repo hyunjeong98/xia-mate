@@ -34,20 +34,17 @@ interface AttendeeInfo {
   userId: string;
   color: string;
 }
-
-// 공연 이모지 매핑 — 새 공연 추가 시 여기에만 추가하면 됩니다
-type PerformanceEmojiEntry = { keyword: string; emoji: string };
-
-const PERFORMANCE_EMOJIS: PerformanceEmojiEntry[] = [
-  { keyword: "비틀쥬스", emoji: "🪲" },
-  { keyword: "데스노트", emoji: "📕" },
-];
-
-const getPerformanceEmoji = (title?: string): string => {
-  if (!title) return "";
-  const match = PERFORMANCE_EMOJIS.find(({ keyword }) => title.includes(keyword));
-  return match ? `${match.emoji} ` : "";
+const PERFORMANCE_BADGE_CLASSES: Record<string, string> = {
+  red:    "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
+  orange: "bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400",
+  yellow: "bg-yellow-50 text-yellow-600 dark:bg-yellow-500/10 dark:text-yellow-400",
+  green:  "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400",
+  blue:   "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+  indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",
+  violet: "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400",
 };
+
+const DEFAULT_BADGE_CLASS = "bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-300";
 
 interface Schedule {
   id: string;
@@ -55,6 +52,8 @@ interface Schedule {
   time: string;
   cast: string[];
   performanceTitle?: string;
+  performanceId?: string;
+  performanceColor?: string;
 }
 
 interface CalendarProps {
@@ -211,13 +210,7 @@ export default function Calendar({ schedules }: CalendarProps) {
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
 
-  const getTimeLabel = (timeStr: string) => {
-    if (!timeStr) return "";
-    const hour = parseInt(timeStr.split(":")[0], 10);
-    return hour < 18 ? "낮공" : "밤공";
-  };
-
-  const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
   const selectedSchedules = selectedDateStr ? scheduleMap[selectedDateStr] || [] : [];
 
   return (
@@ -269,7 +262,7 @@ export default function Calendar({ schedules }: CalendarProps) {
             <div
               key={i}
               onClick={() => setSelectedDate(day)}
-              className={`relative flex min-h-[70px] cursor-pointer flex-col p-1 transition-colors md:min-h-[80px] md:p-2 ${!isCurrentMonth
+              className={`relative flex min-h-[70px] cursor-pointer flex-col p-0.5 transition-colors md:min-h-[80px] md:p-2 ${!isCurrentMonth
                 ? "bg-zinc-50/50 opacity-30 dark:bg-zinc-950/50"
                 : isSelected
                   ? "z-10 bg-rose-50 dark:bg-rose-500/10"
@@ -291,12 +284,13 @@ export default function Calendar({ schedules }: CalendarProps) {
                 {daySchedules.map((s, idx) => (
                   <div
                     key={idx}
-                    className={`rounded-md px-1 py-0.5 text-center text-[9px] font-black md:text-[10px] ${getTimeLabel(s.time) === "낮공"
-                      ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-500"
-                      : "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-500"
-                      }`}
+                    className={`rounded-md py-0.5 text-center text-[9px] font-black md:text-[10px] ${
+                      s.performanceColor
+                        ? PERFORMANCE_BADGE_CLASSES[s.performanceColor] ?? DEFAULT_BADGE_CLASS
+                        : DEFAULT_BADGE_CLASS
+                    }`}
                   >
-                    {getPerformanceEmoji(s.performanceTitle)}{getTimeLabel(s.time)}
+                    {s.performanceTitle}
                   </div>
                 ))}
               </div>
@@ -306,7 +300,7 @@ export default function Calendar({ schedules }: CalendarProps) {
                   {attendeesByDate[dateStr].map(({ initial, userId, color }) => (
                     <span
                       key={userId}
-                      className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-black text-white ${color}`}
+                      className={`flex h-4 w-4 items-center justify-center rounded-md text-[8px] font-black text-white ${color}`}
                     >
                       {initial}
                     </span>
@@ -340,12 +334,6 @@ export default function Calendar({ schedules }: CalendarProps) {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className={`rounded-lg px-2 py-1 text-[10px] font-black uppercase tracking-wider ${getTimeLabel(s.time) === "낮공"
-                          ? "bg-amber-100 text-amber-600 dark:bg-amber-500/20"
-                          : "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20"
-                          }`}>
-                          {getPerformanceEmoji(s.performanceTitle)}{getTimeLabel(s.time)}
-                        </span>
                         <span className="text-xl font-black text-zinc-900 dark:text-white">
                           {s.time}
                         </span>

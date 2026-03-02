@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Sidebar from "@/components/Sidebar";
 import Calendar from "@/components/Calendar";
@@ -14,6 +14,8 @@ interface Schedule {
   time: string;
   cast: string[];
   performanceTitle?: string;
+  performanceId?: string;
+  performanceColor?: string;
 }
 
 export default function Home() {
@@ -21,6 +23,7 @@ export default function Home() {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [performanceColorMap, setPerformanceColorMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!loading) {
@@ -31,6 +34,18 @@ export default function Home() {
       }
     }
   }, [user, profile, loading, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    getDocs(collection(db, "performances")).then((snap) => {
+      const map: Record<string, string> = {};
+      snap.docs.forEach((d) => {
+        const color = d.data().color;
+        if (color) map[d.id] = color;
+      });
+      setPerformanceColorMap(map);
+    });
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -46,6 +61,14 @@ export default function Home() {
 
     return () => unsubscribe();
   }, [user]);
+
+  const schedulesWithColor = useMemo(() =>
+    schedules.map((s) => ({
+      ...s,
+      performanceColor: s.performanceId ? performanceColorMap[s.performanceId] : undefined,
+    })),
+    [schedules, performanceColorMap]
+  );
 
   if (loading || !user || !profile) {
     return (
@@ -82,7 +105,7 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-1 px-4 py-6 md:px-6">
         <div className="rounded-3xl bg-white p-2 dark:bg-zinc-900">
-          <Calendar schedules={schedules} />
+          <Calendar schedules={schedulesWithColor} />
         </div>
       </main>
     </div>
