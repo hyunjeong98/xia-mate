@@ -9,13 +9,23 @@ import { useAuth } from "@/providers/AuthProvider";
 
 const AVATAR_COLORS = [
   "bg-rose-400",
-  "bg-indigo-400",
-  "bg-emerald-400",
-  "bg-amber-400",
-  "bg-violet-400",
-  "bg-cyan-400",
   "bg-pink-400",
+  "bg-fuchsia-400",
+  "bg-purple-400",
+  "bg-violet-400",
+  "bg-indigo-400",
+  "bg-blue-400",
+  "bg-sky-400",
+  "bg-cyan-400",
   "bg-teal-400",
+  "bg-emerald-400",
+  "bg-green-400",
+  "bg-lime-500",
+  "bg-yellow-400",
+  "bg-amber-400",
+  "bg-orange-400",
+  "bg-red-400",
+  "bg-slate-400",
 ];
 
 interface AttendeeInfo {
@@ -90,7 +100,7 @@ export default function Calendar({ schedules }: CalendarProps) {
           userInfoMap[d.id] = {
             initial: nickname.charAt(0),
             nickname,
-            color: AVATAR_COLORS[i % AVATAR_COLORS.length],
+            color: d.data().color || AVATAR_COLORS[i % AVATAR_COLORS.length],
           };
         }
       });

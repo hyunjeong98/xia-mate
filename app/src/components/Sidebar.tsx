@@ -101,8 +101,11 @@ export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) 
           {/* Footer */}
           <div className="border-t border-zinc-100 p-4 dark:border-zinc-800">
             {/* User Profile Info */}
-            <div className="mb-2 flex items-center gap-3 px-2 py-2">
-              <div className="h-9 w-9 shrink-0 rounded-xl bg-rose-500 flex items-center justify-center text-white text-sm font-bold">
+            <Link
+              href="/my-page"
+              className={`mb-2 flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${pathname === "/my-page" ? "bg-zinc-50 dark:bg-zinc-800" : ""}`}
+            >
+              <div className={`h-9 w-9 shrink-0 rounded-xl flex items-center justify-center text-white text-sm font-bold ${userProfile?.color || "bg-rose-500"}`}>
                 {userProfile?.nickname?.charAt(0) || "U"}
               </div>
               <div className="min-w-0">
@@ -111,7 +114,7 @@ export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) 
                 </p>
                 <p className="truncate text-xs text-zinc-500">{userProfile?.email}</p>
               </div>
-            </div>
+            </Link>
             <button
               onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white"
