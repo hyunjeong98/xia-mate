@@ -40,7 +40,7 @@ export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) 
       >
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-5 dark:border-zinc-800">
+          <div className="flex items-center justify-between px-6 py-5">
             <h2 className="text-xl font-black tracking-tighter text-rose-500">
               XIA MATE
             </h2>
