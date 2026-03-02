@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
-import { auth } from "@/lib/firebase";
-import { signOut } from "firebase/auth";
+import Sidebar from "@/components/Sidebar";
 
 export default function Home() {
   const { user, profile, loading } = useAuth();
   const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!loading) {
@@ -20,11 +20,6 @@ export default function Home() {
     }
   }, [user, profile, loading, router]);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push("/login");
-  };
-
   if (loading || !user || !profile) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -35,20 +30,26 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        userProfile={profile}
+      />
+
       {/* Header */}
       <header className="sticky top-0 z-10 flex items-center justify-between bg-white/80 px-6 py-4 backdrop-blur-md dark:bg-zinc-900/80">
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="rounded-xl p-2 text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
         <h1 className="text-xl font-black tracking-tighter text-rose-500">
           XIA MATE
         </h1>
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium">{profile.nickname}님</span>
-          <button
-            onClick={handleLogout}
-            className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-          >
-            로그아웃
-          </button>
-        </div>
+        <div className="w-10" /> {/* Spacer for centering the title */}
       </header>
 
       {/* Main Content */}
@@ -59,30 +60,6 @@ export default function Home() {
           </p>
         </div>
       </main>
-
-      {/* Bottom Nav Placeholder */}
-      <nav className="sticky bottom-0 border-t border-zinc-100 bg-white/80 p-4 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/80">
-        <div className="mx-auto flex max-w-xs justify-around text-xs font-medium text-zinc-400">
-          <div className="flex flex-col items-center gap-1 text-rose-500">
-            <div className="h-6 w-6 rounded-full bg-rose-500/10 p-1">
-              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
-            </div>
-            홈
-          </div>
-          <div className="flex flex-col items-center gap-1">
-            <div className="h-6 w-6 p-1">
-              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" /></svg>
-            </div>
-            기록
-          </div>
-          <div className="flex flex-col items-center gap-1">
-            <div className="h-6 w-6 p-1">
-              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
-            </div>
-            친구
-          </div>
-        </div>
-      </nav>
     </div>
   );
 }
