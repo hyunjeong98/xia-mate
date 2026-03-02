@@ -25,6 +25,12 @@ interface RankingEntry {
   count: number;
 }
 
+interface PopularCastEntry {
+  actor: string;
+  count: number;
+  total: number;
+}
+
 interface PerformanceStats {
   id: string;
   title: string;
@@ -33,6 +39,7 @@ interface PerformanceStats {
   totalAttendance: number;
   topDate: string | null;
   ranking: RankingEntry[];
+  popularCast: PopularCastEntry[];
 }
 
 export default function StatsPage() {
@@ -94,6 +101,25 @@ export default function StatsPage() {
           });
           const topDate = Object.entries(countByDate).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
+          // Popular cast: per role index, find most-attended actor
+          const popularCast: PopularCastEntry[] = [];
+          if (perfMy.length > 0) {
+            const maxLen = Math.max(0, ...perfMy.map((m: any) => (m.cast as string[] | undefined)?.length ?? 0));
+            for (let i = 0; i < maxLen; i++) {
+              const countByActor: Record<string, number> = {};
+              let total = 0;
+              perfMy.forEach((m: any) => {
+                const actor = (m.cast as string[] | undefined)?.[i];
+                if (actor) {
+                  countByActor[actor] = (countByActor[actor] || 0) + 1;
+                  total++;
+                }
+              });
+              const top = Object.entries(countByActor).sort((a, b) => b[1] - a[1])[0];
+              if (top) popularCast.push({ actor: top[0], count: top[1], total });
+            }
+          }
+
           return {
             id: p.id,
             title: p.title,
@@ -102,6 +128,7 @@ export default function StatsPage() {
             totalAttendance: perfMy.length,
             topDate,
             ranking,
+            popularCast,
           };
         });
 
@@ -177,7 +204,7 @@ export default function StatsPage() {
                 const maxCount = s.ranking[0]?.count ?? 1;
 
                 return (
-                  <div key={s.id} className="group relative overflow-hidden rounded-[2rem] bg-white p-6 shadow-sm transition-all hover:shadow-xl dark:bg-zinc-900">
+                  <div key={s.id} className="group relative overflow-hidden rounded-4xl bg-white p-6 shadow-sm transition-all hover:shadow-xl dark:bg-zinc-900">
                     {/* Header */}
                     <div className="mb-6 flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -252,6 +279,27 @@ export default function StatsPage() {
                           {s.ranking.length > 5 && (
                             <p className="text-center text-[10px] font-bold text-zinc-400 pt-2">+ {s.ranking.length - 5} more friends</p>
                           )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Popular Cast Section */}
+                    <div className="mt-6">
+                      <div className="flex items-center mb-4">
+                        <h5 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">많이 본 캐스팅</h5>
+                        <div className="h-px flex-1 bg-zinc-100 dark:bg-zinc-800 ml-4" />
+                      </div>
+
+                      {s.popularCast.length === 0 ? (
+                        <p className="py-2 text-center text-xs font-medium text-zinc-400">캐스팅 데이터가 없어요.</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {s.popularCast.map((entry, idx) => (
+                            <div key={idx} className="flex items-center gap-1.5 rounded-xl bg-zinc-50 px-3 py-2 dark:bg-zinc-800/50">
+                              <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">{entry.actor}</span>
+                              <span className="text-[10px] text-zinc-400">{entry.count}/{entry.total}회</span>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
