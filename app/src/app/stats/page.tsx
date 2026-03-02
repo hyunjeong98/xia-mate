@@ -243,7 +243,9 @@ export default function StatsPage() {
                         <p className="py-2 text-center text-xs font-medium text-zinc-400">아직 기록이 없어요.</p>
                       ) : (
                         <div className="space-y-4">
-                          {s.ranking.slice(0, 5).map((entry, idx) => (
+                          {s.ranking.slice(0, 5).map((entry) => {
+                            const rank = s.ranking.findIndex(e => e.count === entry.count) + 1;
+                            return (
                             <div key={entry.userId} className="relative">
                               <div className="flex items-center gap-3">
                                 {/* Rank & Avatar */}
@@ -251,9 +253,9 @@ export default function StatsPage() {
                                   <div className={`h-8 w-8 rounded-xl ${entry.color} flex items-center justify-center text-[10px] font-black text-white shadow-sm`}>
                                     {entry.nickname.charAt(0)}
                                   </div>
-                                  <div className={`absolute -bottom-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-lg border-2 border-white bg-zinc-900 text-[8px] font-black text-white dark:border-zinc-900 ${idx === 0 ? "bg-amber-500" : ""
+                                  <div className={`absolute -bottom-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-lg border-2 border-white bg-zinc-900 text-[8px] font-black text-white dark:border-zinc-900 ${rank === 1 ? "bg-amber-500" : ""
                                     }`}>
-                                    {idx + 1}
+                                    {rank}
                                   </div>
                                 </div>
 
@@ -272,7 +274,8 @@ export default function StatsPage() {
                                 </div>
                               </div>
                             </div>
-                          ))}
+                          );
+                          })}
                           {s.ranking.length > 5 && (
                             <p className="text-center text-[10px] font-bold text-zinc-400 pt-2">+ {s.ranking.length - 5} more friends</p>
                           )}
