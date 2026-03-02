@@ -3,9 +3,27 @@
 import { useState, useMemo, useEffect } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { ko } from "date-fns/locale";
-import { collection, addDoc, getDocs, query, where, Timestamp, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, getDoc, query, where, Timestamp, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/providers/AuthProvider";
+
+const AVATAR_COLORS = [
+  "bg-rose-400",
+  "bg-indigo-400",
+  "bg-emerald-400",
+  "bg-amber-400",
+  "bg-violet-400",
+  "bg-cyan-400",
+  "bg-pink-400",
+  "bg-teal-400",
+];
+
+interface AttendeeInfo {
+  initial: string;
+  nickname: string;
+  userId: string;
+  color: string;
+}
 
 // 공연 이모지 매핑 — 새 공연 추가 시 여기에만 추가하면 됩니다
 type PerformanceEmojiEntry = { keyword: string; emoji: string };
@@ -40,6 +58,8 @@ export default function Calendar({ schedules }: CalendarProps) {
   // scheduleId -> docId 맵으로 변경
   const [mySchedulesMap, setMySchedulesMap] = useState<Record<string, string>>({});
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [attendeesByDate, setAttendeesByDate] = useState<Record<string, AttendeeInfo[]>>({});
+  const [attendeesBySchedule, setAttendeesBySchedule] = useState<Record<string, AttendeeInfo[]>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -52,6 +72,56 @@ export default function Calendar({ schedules }: CalendarProps) {
       setMySchedulesMap(map);
     });
   }, [user]);
+
+  useEffect(() => {
+    const fetchAttendees = async () => {
+      const snap = await getDocs(collection(db, "mySchedules"));
+      const docs = snap.docs.map(d => d.data() as any);
+
+      const uniqueUserIds = [...new Set(docs.map(d => d.userId as string))];
+      const profileDocs = await Promise.all(
+        uniqueUserIds.map(uid => getDoc(doc(db, "users", uid)))
+      );
+
+      const userInfoMap: Record<string, { initial: string; nickname: string; color: string }> = {};
+      profileDocs.forEach((d, i) => {
+        if (d.exists()) {
+          const nickname = d.data().nickname || "?";
+          userInfoMap[d.id] = {
+            initial: nickname.charAt(0),
+            nickname,
+            color: AVATAR_COLORS[i % AVATAR_COLORS.length],
+          };
+        }
+      });
+
+      const byDate: Record<string, AttendeeInfo[]> = {};
+      const bySchedule: Record<string, AttendeeInfo[]> = {};
+
+      docs.forEach(d => {
+        const info = userInfoMap[d.userId];
+        if (!info) return;
+        const attendee: AttendeeInfo = { ...info, userId: d.userId };
+
+        if (d.date) {
+          if (!byDate[d.date]) byDate[d.date] = [];
+          if (!byDate[d.date].some(a => a.userId === d.userId)) {
+            byDate[d.date].push(attendee);
+          }
+        }
+
+        if (d.scheduleId) {
+          if (!bySchedule[d.scheduleId]) bySchedule[d.scheduleId] = [];
+          bySchedule[d.scheduleId].push(attendee);
+        }
+      });
+
+      setAttendeesByDate(byDate);
+      setAttendeesBySchedule(bySchedule);
+    };
+
+    fetchAttendees();
+  }, []);
 
   const handleToggleMySchedule = async (s: Schedule) => {
     if (!user || addingId) return;
@@ -196,6 +266,19 @@ export default function Calendar({ schedules }: CalendarProps) {
                   </div>
                 ))}
               </div>
+
+              {(attendeesByDate[dateStr] || []).length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-0.5">
+                  {attendeesByDate[dateStr].map(({ initial, userId, color }) => (
+                    <span
+                      key={userId}
+                      className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-black text-white ${color}`}
+                    >
+                      {initial}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -269,6 +352,22 @@ export default function Calendar({ schedules }: CalendarProps) {
                         </span>
                       ))}
                     </div>
+
+                    {(attendeesBySchedule[s.id] || []).length > 0 && (
+                      <div className="mt-3 flex items-center gap-2">
+                        <span className="text-xs text-zinc-400">함께 관람</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {attendeesBySchedule[s.id].map(({ nickname, userId, color }) => (
+                            <span
+                              key={userId}
+                              className={`rounded-full px-2.5 py-1 text-xs font-bold text-white ${color}`}
+                            >
+                              {nickname}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
