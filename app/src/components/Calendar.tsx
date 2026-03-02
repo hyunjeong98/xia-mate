@@ -1,0 +1,195 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
+import { ko } from "date-fns/locale";
+
+interface Schedule {
+  id: string;
+  date: string;
+  time: string;
+  cast: string[];
+  performanceTitle?: string;
+}
+
+interface CalendarProps {
+  schedules: Schedule[];
+}
+
+export default function Calendar({ schedules }: CalendarProps) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+
+  const days = useMemo(() => {
+    const start = startOfWeek(startOfMonth(currentDate));
+    const end = endOfWeek(endOfMonth(currentDate));
+    return eachDayOfInterval({ start, end });
+  }, [currentDate]);
+
+  const scheduleMap = useMemo(() => {
+    const map: Record<string, Schedule[]> = {};
+    schedules.forEach((s) => {
+      if (!map[s.date]) map[s.date] = [];
+      map[s.date].push(s);
+    });
+    return map;
+  }, [schedules]);
+
+  const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+  const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
+
+  const getTimeLabel = (timeStr: string) => {
+    if (!timeStr) return "";
+    const hour = parseInt(timeStr.split(":")[0], 10);
+    return hour < 18 ? "낮공" : "밤공";
+  };
+
+  const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+  const selectedSchedules = selectedDateStr ? scheduleMap[selectedDateStr] || [] : [];
+
+  return (
+    <div className="w-full">
+      {/* Calendar Header */}
+      <div className="mb-6 flex items-center justify-between px-2">
+        <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
+          {format(currentDate, "yyyy년 M월", { locale: ko })}
+        </h2>
+        <div className="flex gap-2">
+          <button
+            onClick={prevMonth}
+            className="rounded-xl p-2 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={nextMonth}
+            className="rounded-xl p-2 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Weekdays */}
+      <div className="mb-2 grid grid-cols-7 text-center text-xs font-bold uppercase tracking-wider text-zinc-400">
+        {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
+          <div key={day} className="py-2">
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Days Grid */}
+      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-2xl border border-zinc-100 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800">
+        {days.map((day, i) => {
+          const dateStr = format(day, "yyyy-MM-dd");
+          const daySchedules = scheduleMap[dateStr] || [];
+          const isCurrentMonth = isSameMonth(day, currentDate);
+          const isToday = isSameDay(day, new Date());
+          const isSelected = selectedDate && isSameDay(day, selectedDate);
+
+          return (
+            <div
+              key={i}
+              onClick={() => setSelectedDate(day)}
+              className={`relative flex min-h-[70px] cursor-pointer flex-col bg-white p-1 transition-colors dark:bg-zinc-900 md:min-h-[80px] md:p-2 ${!isCurrentMonth ? "bg-zinc-50/50 opacity-30 dark:bg-zinc-950/50" : ""
+                } ${isSelected ? "bg-rose-50/50 dark:bg-rose-500/5 z-10" : ""}`}
+            >
+              <span
+                className={`flex h-6 w-6 items-center justify-center text-xs font-bold md:h-7 md:w-7 md:text-sm ${isToday
+                  ? "rounded-full bg-rose-500 text-white"
+                  : isCurrentMonth
+                    ? "text-zinc-900 dark:text-zinc-100"
+                    : "text-zinc-400"
+                  }`}
+              >
+                {format(day, "d")}
+              </span>
+
+              <div className="mt-1 space-y-0.5">
+                {daySchedules.map((s, idx) => (
+                  <div
+                    key={idx}
+                    className={`rounded-md px-1 py-0.5 text-center text-[9px] font-black md:text-[10px] ${getTimeLabel(s.time) === "낮공"
+                      ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-500"
+                      : "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-500"
+                      }`}
+                  >
+                    {getTimeLabel(s.time)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Detail Section */}
+      <div className="mt-8 space-y-4 px-2">
+        {selectedDate && (
+          <>
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-2 dark:border-zinc-800">
+              <h3 className="text-lg font-black text-zinc-900 dark:text-white">
+                {format(selectedDate, "M월 d일 (EEEE)", { locale: ko })}
+              </h3>
+              <span className="text-xs font-bold text-rose-500">
+                {selectedSchedules.length}개의 공연
+              </span>
+            </div>
+
+            {selectedSchedules.length > 0 ? (
+              <div className="space-y-3">
+                {selectedSchedules.map((s) => (
+                  <div
+                    key={s.id}
+                    className="group relative overflow-hidden rounded-2xl bg-zinc-50 p-5 transition-all hover:bg-zinc-100 dark:bg-zinc-800/50 dark:hover:bg-zinc-800"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={`rounded-lg px-2 py-1 text-[10px] font-black uppercase tracking-wider ${getTimeLabel(s.time) === "낮공"
+                          ? "bg-amber-100 text-amber-600 dark:bg-amber-500/20"
+                          : "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20"
+                          }`}>
+                          {getTimeLabel(s.time)}
+                        </span>
+                        <span className="text-xl font-black text-zinc-900 dark:text-white">
+                          {s.time}
+                        </span>
+                        {s.performanceTitle && (
+                          <span className="text-sm font-bold text-zinc-500 dark:text-zinc-400">
+                            {s.performanceTitle}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {s.cast.map((c, i) => (
+                        <span
+                          key={i}
+                          className="rounded-full bg-white px-3 py-1 text-xs font-bold text-zinc-600 shadow-sm dark:bg-zinc-900 dark:text-zinc-400"
+                        >
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-zinc-400">
+                <svg className="mb-2 h-8 w-8 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-sm font-medium">공연 정보가 없습니다.</p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -3,12 +3,24 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import Sidebar from "@/components/Sidebar";
+import Calendar from "@/components/Calendar";
+
+interface Schedule {
+  id: string;
+  date: string;
+  time: string;
+  cast: string[];
+  performanceTitle?: string;
+}
 
 export default function Home() {
   const { user, profile, loading } = useAuth();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
 
   useEffect(() => {
     if (!loading) {
@@ -20,6 +32,21 @@ export default function Home() {
     }
   }, [user, profile, loading, router]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(collection(db, "schedules"), orderBy("date", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const scheduleList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Schedule[];
+      setSchedules(scheduleList);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
   if (loading || !user || !profile) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -29,7 +56,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-white dark:bg-zinc-900">
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -49,15 +76,13 @@ export default function Home() {
         <h1 className="text-xl font-black tracking-tighter text-rose-500">
           XIA MATE
         </h1>
-        <div className="w-10" /> {/* Spacer for centering the title */}
+        <div className="w-10" />
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-6 py-8">
-        <div className="rounded-3xl border-2 border-dashed border-zinc-200 p-12 text-center dark:border-zinc-800">
-          <p className="text-zinc-400">
-            공연 기간이 아닙니다.<br />곧 새로운 소식을 가져올게요!
-          </p>
+      <main className="flex-1 px-4 py-6 md:px-6">
+        <div className="rounded-3xl bg-white p-2 dark:bg-zinc-900">
+          <Calendar schedules={schedules} />
         </div>
       </main>
     </div>
