@@ -110,8 +110,13 @@ export default function Calendar({ schedules }: CalendarProps) {
             <div
               key={i}
               onClick={() => setSelectedDate(day)}
-              className={`relative flex min-h-[70px] cursor-pointer flex-col bg-white p-1 transition-colors dark:bg-zinc-900 md:min-h-[80px] md:p-2 ${!isCurrentMonth ? "bg-zinc-50/50 opacity-30 dark:bg-zinc-950/50" : ""
-                } ${isSelected ? "bg-rose-50 dark:bg-rose-500/10 z-10" : ""}`}
+              className={`relative flex min-h-[70px] cursor-pointer flex-col p-1 transition-colors md:min-h-[80px] md:p-2 ${
+                !isCurrentMonth
+                  ? "bg-zinc-50/50 opacity-30 dark:bg-zinc-950/50"
+                  : isSelected
+                  ? "z-10 bg-rose-50 dark:bg-rose-500/10"
+                  : "bg-white dark:bg-zinc-900"
+              }`}
             >
               <span
                 className={`flex h-6 w-6 items-center justify-center text-xs font-bold md:h-7 md:w-7 md:text-sm ${isToday
