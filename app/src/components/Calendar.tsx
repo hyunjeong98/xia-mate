@@ -62,7 +62,7 @@ interface CalendarProps {
 }
 
 export default function Calendar({ schedules }: CalendarProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   // scheduleId -> docId 맵으로 변경
@@ -138,18 +138,32 @@ export default function Calendar({ schedules }: CalendarProps) {
     setAddingId(s.id);
 
     const existingDocId = mySchedulesMap[s.id];
+    const nickname = profile?.nickname || "?";
+    const color = profile?.color || AVATAR_COLORS[0];
+    const myAttendee: AttendeeInfo = { initial: nickname.charAt(0), nickname, userId: user.uid, color };
 
     try {
       if (existingDocId) {
-        // 이미 있으면 삭제
         await deleteDoc(doc(db, "mySchedules", existingDocId));
-        setMySchedulesMap((prev) => {
-          const next = { ...prev };
-          delete next[s.id];
-          return next;
-        });
+        const newMap = { ...mySchedulesMap };
+        delete newMap[s.id];
+        setMySchedulesMap(newMap);
+
+        setAttendeesBySchedule(prev => ({
+          ...prev,
+          [s.id]: (prev[s.id] || []).filter(a => a.userId !== user.uid),
+        }));
+
+        const hasOtherOnSameDate = Object.keys(newMap).some(schedId =>
+          schedules.find(sc => sc.id === schedId)?.date === s.date
+        );
+        if (!hasOtherOnSameDate) {
+          setAttendeesByDate(prev => ({
+            ...prev,
+            [s.date]: (prev[s.date] || []).filter(a => a.userId !== user.uid),
+          }));
+        }
       } else {
-        // 없으면 추가
         const docRef = await addDoc(collection(db, "mySchedules"), {
           userId: user.uid,
           scheduleId: s.id,
@@ -160,7 +174,17 @@ export default function Calendar({ schedules }: CalendarProps) {
           cast: s.cast,
           createdAt: Timestamp.now(),
         });
-        setMySchedulesMap((prev) => ({ ...prev, [s.id]: docRef.id }));
+        setMySchedulesMap(prev => ({ ...prev, [s.id]: docRef.id }));
+
+        setAttendeesBySchedule(prev => ({
+          ...prev,
+          [s.id]: [...(prev[s.id] || []), myAttendee],
+        }));
+        setAttendeesByDate(prev => {
+          const current = prev[s.date] || [];
+          if (current.some(a => a.userId === user.uid)) return prev;
+          return { ...prev, [s.date]: [...current, myAttendee] };
+        });
       }
     } catch (err) {
       console.error("Failed to toggle schedule:", err);
@@ -263,7 +287,7 @@ export default function Calendar({ schedules }: CalendarProps) {
                 {format(day, "d")}
               </span>
 
-              <div className="mt-1 space-y-0.5">
+              <div className="space-y-0.5">
                 {daySchedules.map((s, idx) => (
                   <div
                     key={idx}
