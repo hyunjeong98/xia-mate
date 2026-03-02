@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -54,21 +54,6 @@ export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) 
             </button>
           </div>
 
-          {/* User Profile Info */}
-          <div className="px-6 py-8">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-rose-500 flex items-center justify-center text-white text-xl font-bold">
-                {userProfile?.nickname?.charAt(0) || "U"}
-              </div>
-              <div>
-                <p className="font-bold text-zinc-900 dark:text-white">
-                  {userProfile?.nickname}
-                </p>
-                <p className="text-xs text-zinc-500">{userProfile?.email}</p>
-              </div>
-            </div>
-          </div>
-
           {/* Navigation Links */}
           <nav className="flex-1 space-y-1 px-4">
             <Link
@@ -84,23 +69,49 @@ export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) 
               홈
             </Link>
             {userProfile?.email === "dhdbs200@gmail.com" && (
-              <Link
-                href="/upload-schedule"
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${pathname === "/upload-schedule"
-                  ? "bg-rose-50 text-rose-500 dark:bg-rose-500/10"
-                  : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                  }`}
-              >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                공연정보 업로드
-              </Link>
+              <>
+                <Link
+                  href="/register-performance"
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${pathname === "/register-performance"
+                    ? "bg-rose-50 text-rose-500 dark:bg-rose-500/10"
+                    : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    }`}
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  공연 등록
+                </Link>
+                <Link
+                  href="/upload-schedule"
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${pathname === "/upload-schedule"
+                    ? "bg-rose-50 text-rose-500 dark:bg-rose-500/10"
+                    : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                    }`}
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  스케줄 업로드
+                </Link>
+              </>
             )}
           </nav>
 
           {/* Footer */}
           <div className="border-t border-zinc-100 p-4 dark:border-zinc-800">
+            {/* User Profile Info */}
+            <div className="mb-2 flex items-center gap-3 px-2 py-2">
+              <div className="h-9 w-9 shrink-0 rounded-xl bg-rose-500 flex items-center justify-center text-white text-sm font-bold">
+                {userProfile?.nickname?.charAt(0) || "U"}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-zinc-900 dark:text-white">
+                  {userProfile?.nickname}
+                </p>
+                <p className="truncate text-xs text-zinc-500">{userProfile?.email}</p>
+              </div>
+            </div>
             <button
               onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-zinc-500 transition-colors hover:bg-zinc-50 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white"
