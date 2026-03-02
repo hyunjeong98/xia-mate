@@ -83,6 +83,20 @@ export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) 
               </svg>
               홈
             </Link>
+            {userProfile?.email === "dhdbs200@gmail.com" && (
+              <Link
+                href="/upload-schedule"
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${pathname === "/upload-schedule"
+                  ? "bg-rose-50 text-rose-500 dark:bg-rose-500/10"
+                  : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  }`}
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                공연정보 업로드
+              </Link>
+            )}
           </nav>
 
           {/* Footer */}
