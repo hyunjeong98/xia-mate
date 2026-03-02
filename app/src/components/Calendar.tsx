@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { ko } from "date-fns/locale";
+import { collection, addDoc, getDocs, query, where, Timestamp, deleteDoc, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/providers/AuthProvider";
 
 // 공연 이모지 매핑 — 새 공연 추가 시 여기에만 추가하면 됩니다
 type PerformanceEmojiEntry = { keyword: string; emoji: string };
@@ -31,8 +34,60 @@ interface CalendarProps {
 }
 
 export default function Calendar({ schedules }: CalendarProps) {
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  // scheduleId -> docId 맵으로 변경
+  const [mySchedulesMap, setMySchedulesMap] = useState<Record<string, string>>({});
+  const [addingId, setAddingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, "mySchedules"), where("userId", "==", user.uid));
+    getDocs(q).then((snap) => {
+      const map: Record<string, string> = {};
+      snap.docs.forEach(d => {
+        map[d.data().scheduleId] = d.id;
+      });
+      setMySchedulesMap(map);
+    });
+  }, [user]);
+
+  const handleToggleMySchedule = async (s: Schedule) => {
+    if (!user || addingId) return;
+    setAddingId(s.id);
+
+    const existingDocId = mySchedulesMap[s.id];
+
+    try {
+      if (existingDocId) {
+        // 이미 있으면 삭제
+        await deleteDoc(doc(db, "mySchedules", existingDocId));
+        setMySchedulesMap((prev) => {
+          const next = { ...prev };
+          delete next[s.id];
+          return next;
+        });
+      } else {
+        // 없으면 추가
+        const docRef = await addDoc(collection(db, "mySchedules"), {
+          userId: user.uid,
+          scheduleId: s.id,
+          performanceId: (s as any).performanceId ?? null,
+          performanceTitle: s.performanceTitle ?? null,
+          date: s.date,
+          time: s.time,
+          cast: s.cast,
+          createdAt: Timestamp.now(),
+        });
+        setMySchedulesMap((prev) => ({ ...prev, [s.id]: docRef.id }));
+      }
+    } catch (err) {
+      console.error("Failed to toggle schedule:", err);
+    } finally {
+      setAddingId(null);
+    }
+  };
 
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentDate));
@@ -110,13 +165,12 @@ export default function Calendar({ schedules }: CalendarProps) {
             <div
               key={i}
               onClick={() => setSelectedDate(day)}
-              className={`relative flex min-h-[70px] cursor-pointer flex-col p-1 transition-colors md:min-h-[80px] md:p-2 ${
-                !isCurrentMonth
-                  ? "bg-zinc-50/50 opacity-30 dark:bg-zinc-950/50"
-                  : isSelected
+              className={`relative flex min-h-[70px] cursor-pointer flex-col p-1 transition-colors md:min-h-[80px] md:p-2 ${!isCurrentMonth
+                ? "bg-zinc-50/50 opacity-30 dark:bg-zinc-950/50"
+                : isSelected
                   ? "z-10 bg-rose-50 dark:bg-rose-500/10"
                   : "bg-white dark:bg-zinc-900"
-              }`}
+                }`}
             >
               <span
                 className={`flex h-6 w-6 items-center justify-center text-xs font-bold md:h-7 md:w-7 md:text-sm ${isToday
@@ -184,6 +238,26 @@ export default function Calendar({ schedules }: CalendarProps) {
                           </span>
                         )}
                       </div>
+                      {user && (
+                        <button
+                          onClick={() => handleToggleMySchedule(s)}
+                          disabled={addingId === s.id}
+                          className={`flex items-center justify-center rounded-full px-5 py-2 text-xs font-bold transition-all active:scale-95 ${mySchedulesMap[s.id]
+                            ? "bg-rose-500 text-white"
+                            : "bg-white text-zinc-400 border border-zinc-200 hover:border-rose-400 hover:text-rose-500 dark:bg-zinc-900 dark:border-zinc-800 dark:hover:border-rose-500/50"
+                            }`}
+                        >
+                          {mySchedulesMap[s.id] ? (
+                            <span>
+                              {s.date > format(new Date(), "yyyy-MM-dd") ? "관람 예정" : "관람 완료"}
+                            </span>
+                          ) : addingId === s.id ? (
+                            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-200 border-t-rose-500" />
+                          ) : (
+                            <span>관극 추가</span>
+                          )}
+                        </button>
+                      )}
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
                       {s.cast.map((c, i) => (
