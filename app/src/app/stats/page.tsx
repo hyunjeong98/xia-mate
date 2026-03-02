@@ -6,7 +6,6 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/providers/AuthProvider";
 import Sidebar from "@/components/Sidebar";
 import { format, parseISO } from "date-fns";
-import { ko } from "date-fns/locale";
 
 const PERFORMANCE_SWATCH_CLASSES: Record<string, string> = {
   red: "bg-red-500",
@@ -206,30 +205,28 @@ export default function StatsPage() {
                 return (
                   <div key={s.id} className="group relative overflow-hidden rounded-4xl bg-white p-6 shadow-sm transition-all hover:shadow-xl dark:bg-zinc-900">
                     {/* Header */}
-                    <div className="mb-6 flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`h-10 w-10 rounded-2xl ${swatchClass} flex items-center justify-center text-white shadow-lg shadow-${s.color}-500/20`}>
-                          <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <h4 className="text-lg font-black text-zinc-900 dark:text-white leading-tight">{s.title}</h4>
+                    <div className="mb-6 flex flex-col items-center gap-3">
+                      <div className={`h-10 w-10 rounded-2xl ${swatchClass} flex items-center justify-center text-white shadow-lg shadow-${s.color}-500/20`}>
+                        <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                        </svg>
                       </div>
+                      <h4 className="text-lg font-black text-zinc-900 dark:text-white leading-tight text-center">{s.title}</h4>
                     </div>
 
                     {/* Stats Grid */}
                     <div className="mb-8 grid grid-cols-3 gap-2">
-                      <div className="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
+                      <div className="rounded-2xl bg-zinc-50 p-4 text-center dark:bg-zinc-800/50">
                         <p className="text-xl font-black text-zinc-900 dark:text-white">{s.totalSchedules}</p>
                         <p className="text-[10px] font-bold text-zinc-400 uppercase mt-1">공연 횟수</p>
                       </div>
-                      <div className="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
+                      <div className="rounded-2xl bg-zinc-50 p-4 text-center dark:bg-zinc-800/50">
                         <p className="text-xl font-black text-zinc-900 dark:text-white">{s.totalAttendance}</p>
                         <p className="text-[10px] font-bold text-zinc-400 uppercase mt-1">관람 횟수</p>
                       </div>
-                      <div className="rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
+                      <div className="rounded-2xl bg-zinc-50 p-4 text-center dark:bg-zinc-800/50">
                         <p className="text-xl font-black text-zinc-900 dark:text-white">
-                          {s.topDate ? format(parseISO(s.topDate), "M/d(EEE)", { locale: ko }) : "-"}
+                          {s.topDate ? format(parseISO(s.topDate), "M/d") : "-"}
                         </p>
                         <p className="text-[10px] font-bold text-zinc-400 uppercase mt-1">최다 관람일</p>
                       </div>
