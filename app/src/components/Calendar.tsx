@@ -4,6 +4,20 @@ import { useState, useMemo } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { ko } from "date-fns/locale";
 
+// 공연 이모지 매핑 — 새 공연 추가 시 여기에만 추가하면 됩니다
+type PerformanceEmojiEntry = { keyword: string; emoji: string };
+
+const PERFORMANCE_EMOJIS: PerformanceEmojiEntry[] = [
+  { keyword: "비틀쥬스", emoji: "🪲" },
+  { keyword: "데스노트", emoji: "📕" },
+];
+
+const getPerformanceEmoji = (title?: string): string => {
+  if (!title) return "";
+  const match = PERFORMANCE_EMOJIS.find(({ keyword }) => title.includes(keyword));
+  return match ? `${match.emoji} ` : "";
+};
+
 interface Schedule {
   id: string;
   date: string;
@@ -97,7 +111,7 @@ export default function Calendar({ schedules }: CalendarProps) {
               key={i}
               onClick={() => setSelectedDate(day)}
               className={`relative flex min-h-[70px] cursor-pointer flex-col bg-white p-1 transition-colors dark:bg-zinc-900 md:min-h-[80px] md:p-2 ${!isCurrentMonth ? "bg-zinc-50/50 opacity-30 dark:bg-zinc-950/50" : ""
-                } ${isSelected ? "bg-rose-50/50 dark:bg-rose-500/5 z-10" : ""}`}
+                } ${isSelected ? "bg-rose-50 dark:bg-rose-500/10 z-10" : ""}`}
             >
               <span
                 className={`flex h-6 w-6 items-center justify-center text-xs font-bold md:h-7 md:w-7 md:text-sm ${isToday
@@ -119,7 +133,7 @@ export default function Calendar({ schedules }: CalendarProps) {
                       : "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-500"
                       }`}
                   >
-                    {getTimeLabel(s.time)}
+                    {getPerformanceEmoji(s.performanceTitle)}{getTimeLabel(s.time)}
                   </div>
                 ))}
               </div>
@@ -154,7 +168,7 @@ export default function Calendar({ schedules }: CalendarProps) {
                           ? "bg-amber-100 text-amber-600 dark:bg-amber-500/20"
                           : "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20"
                           }`}>
-                          {getTimeLabel(s.time)}
+                          {getPerformanceEmoji(s.performanceTitle)}{getTimeLabel(s.time)}
                         </span>
                         <span className="text-xl font-black text-zinc-900 dark:text-white">
                           {s.time}
