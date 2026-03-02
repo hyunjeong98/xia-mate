@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
@@ -14,6 +14,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
   // Close sidebar on path change
   useEffect(() => {
@@ -22,6 +23,7 @@ export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) 
 
   const handleLogout = async () => {
     await signOut(auth);
+    router.push("/login");
   };
 
   return (
