@@ -256,7 +256,7 @@ export default function UploadSchedulePage() {
                       placeholder="공연 검색..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="mb-2 w-full rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-sm outline-none dark:border-zinc-800 dark:bg-zinc-800"
+                      className="mb-2 w-full rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-base outline-none dark:border-zinc-800 dark:bg-zinc-800"
                     />
                     <div className="max-h-48 overflow-y-auto">
                       {filteredPerformances.length > 0 ? (

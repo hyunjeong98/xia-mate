@@ -71,7 +71,7 @@ export default function SetupNicknamePage() {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               placeholder="닉네임"
-              className="w-full rounded-2xl border border-zinc-200 bg-white p-4 text-center text-zinc-900 focus:border-rose-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+              className="w-full rounded-2xl border border-zinc-200 bg-white p-4 text-center text-base text-zinc-900 focus:border-rose-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
               maxLength={10}
               required
             />
