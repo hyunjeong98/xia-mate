@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "XIA Mate - 공연 관람 기록",
   description: "친구들과 함께하는 XIA(김준수) 공연 관람 기록 사이트",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
