@@ -64,6 +64,7 @@ export default function Calendar({ schedules }: CalendarProps) {
   const { user, profile } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
   // scheduleId -> docId 맵으로 변경
   const [mySchedulesMap, setMySchedulesMap] = useState<Record<string, string>>({});
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -200,12 +201,13 @@ export default function Calendar({ schedules }: CalendarProps) {
 
   const scheduleMap = useMemo(() => {
     const map: Record<string, Schedule[]> = {};
-    schedules.forEach((s) => {
+    const filtered = showOnlyMine ? schedules.filter(s => mySchedulesMap[s.id]) : schedules;
+    filtered.forEach((s) => {
       if (!map[s.date]) map[s.date] = [];
       map[s.date].push(s);
     });
     return map;
-  }, [schedules]);
+  }, [schedules, showOnlyMine, mySchedulesMap]);
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -220,7 +222,32 @@ const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null
         <h2 className="text-xl font-bold text-zinc-900 dark:text-white">
           {format(currentDate, "yyyy년 M월", { locale: ko })}
         </h2>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
+          {user && (
+            <button
+              onClick={() => setShowOnlyMine(prev => !prev)}
+              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition-colors ${
+                showOnlyMine
+                  ? "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
+                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              }`}
+            >
+              <div
+                className={`flex h-4 w-4 items-center justify-center rounded-[5px] border transition-colors ${
+                  showOnlyMine
+                    ? "border-rose-500 bg-rose-500 text-white dark:border-rose-400 dark:bg-rose-400"
+                    : "border-zinc-300 bg-transparent dark:border-zinc-600"
+                }`}
+              >
+                {showOnlyMine && (
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+              내 관극
+            </button>
+          )}
           <button
             onClick={prevMonth}
             className="rounded-xl p-2 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
