@@ -320,7 +320,7 @@ export default function Calendar({ schedules }: CalendarProps) {
                 ))}
               </div>
 
-              {(attendeesByDate[dateStr] || []).length > 0 && (
+              {(!showOnlyMine || daySchedules.length > 0) && (attendeesByDate[dateStr] || []).length > 0 && (
                 <div className="mt-1 flex flex-wrap gap-0.5">
                   {attendeesByDate[dateStr].map(({ initial, userId, color }) => (
                     <span
