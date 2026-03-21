@@ -71,6 +71,18 @@ export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) 
               홈
             </Link>
             <Link
+              href="/my-history"
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${pathname.startsWith("/my-history")
+                ? "bg-rose-50 text-rose-500 dark:bg-rose-500/10"
+                : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                }`}
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+              내 관람 내역
+            </Link>
+            <Link
               href="/stats"
               className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${pathname === "/stats"
                 ? "bg-rose-50 text-rose-500 dark:bg-rose-500/10"
