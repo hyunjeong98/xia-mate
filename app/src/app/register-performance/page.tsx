@@ -45,13 +45,13 @@ export default function RegisterConcertPage() {
   const [deleteTarget, setDeleteTarget] = useState<Performance | null>(null);
 
   useEffect(() => {
-    if (!loading && profile && profile.email !== "dhdbs200@gmail.com") {
+    if (!loading && !profile) {
       router.replace("/");
     }
   }, [profile, loading, router]);
 
   useEffect(() => {
-    if (!profile || profile.email !== "dhdbs200@gmail.com") return;
+    if (!profile) return;
     getDocs(query(collection(db, "performances"), orderBy("startDate", "desc")))
       .then((snap) =>
         setPerformances(
@@ -60,7 +60,7 @@ export default function RegisterConcertPage() {
       );
   }, [profile]);
 
-  if (loading || !profile || profile.email !== "dhdbs200@gmail.com") {
+  if (loading || !profile) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-rose-500 border-t-transparent" />
