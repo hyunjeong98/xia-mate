@@ -35,13 +35,14 @@ interface AttendeeInfo {
   color: string;
 }
 const PERFORMANCE_BADGE_CLASSES: Record<string, string> = {
-  red:    "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
+  red: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",
   orange: "bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400",
   yellow: "bg-yellow-50 text-yellow-600 dark:bg-yellow-500/10 dark:text-yellow-400",
-  green:  "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400",
-  blue:   "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+  green: "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400",
+  blue: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
   indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",
   violet: "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400",
+  black: "bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100",
 };
 
 const DEFAULT_BADGE_CLASS = "bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-300";
@@ -212,7 +213,7 @@ export default function Calendar({ schedules }: CalendarProps) {
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
 
-const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+  const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
   const selectedSchedules = selectedDateStr ? scheduleMap[selectedDateStr] || [] : [];
 
   return (
@@ -226,18 +227,16 @@ const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null
           {user && (
             <button
               onClick={() => setShowOnlyMine(prev => !prev)}
-              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition-colors ${
-                showOnlyMine
+              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition-colors ${showOnlyMine
                   ? "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
                   : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-              }`}
+                }`}
             >
               <div
-                className={`flex h-4 w-4 items-center justify-center rounded-[5px] border transition-colors ${
-                  showOnlyMine
+                className={`flex h-4 w-4 items-center justify-center rounded-[5px] border transition-colors ${showOnlyMine
                     ? "border-rose-500 bg-rose-500 text-white dark:border-rose-400 dark:bg-rose-400"
                     : "border-zinc-300 bg-transparent dark:border-zinc-600"
-                }`}
+                  }`}
               >
                 {showOnlyMine && (
                   <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -311,11 +310,10 @@ const selectedDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null
                 {daySchedules.map((s, idx) => (
                   <div
                     key={idx}
-                    className={`rounded-md py-0.5 text-center text-[9px] font-black md:text-[10px] ${
-                      s.performanceColor
+                    className={`rounded-md py-0.5 text-center text-[9px] font-black md:text-[10px] ${s.performanceColor
                         ? PERFORMANCE_BADGE_CLASSES[s.performanceColor] ?? DEFAULT_BADGE_CLASS
                         : DEFAULT_BADGE_CLASS
-                    }`}
+                      }`}
                   >
                     {s.performanceTitle}
                   </div>

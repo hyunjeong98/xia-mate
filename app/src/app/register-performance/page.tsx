@@ -15,6 +15,7 @@ const PERFORMANCE_COLOR_OPTIONS = [
   { key: "blue", label: "파", swatch: "bg-blue-500" },
   { key: "indigo", label: "남", swatch: "bg-indigo-500" },
   { key: "violet", label: "보", swatch: "bg-violet-500" },
+  { key: "black", label: "검", swatch: "bg-zinc-900" },
 ];
 
 interface Performance {
