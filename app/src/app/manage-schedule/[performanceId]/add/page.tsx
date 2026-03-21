@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { collection, addDoc, Timestamp, getDocs, query, orderBy } from "firebase/firestore";
+import { useRouter, useParams } from "next/navigation";
+import { collection, addDoc, Timestamp, getDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/providers/AuthProvider";
 import Sidebar from "@/components/Sidebar";
@@ -13,24 +13,16 @@ interface Schedule {
   cast: string[];
 }
 
-interface Performance {
-  id: string;
-  title: string;
-}
-
-export default function UploadSchedulePage() {
+export default function AddSchedulePage() {
   const { user, profile, loading } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const performanceId = params.performanceId as string;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mode, setMode] = useState<"image" | "manual">("image");
-
-  // 공연 목록
-  const [performances, setPerformances] = useState<Performance[]>([]);
-  const [selectedPerformanceId, setSelectedPerformanceId] = useState<string>("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [performanceTitle, setPerformanceTitle] = useState("");
 
   // 이미지 추출 모드 상태
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -57,14 +49,13 @@ export default function UploadSchedulePage() {
   }, [profile, loading, router]);
 
   useEffect(() => {
-    if (!profile || profile.email !== "dhdbs200@gmail.com") return;
-    const fetchPerformances = async () => {
-      const q = query(collection(db, "performances"), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      setPerformances(snap.docs.map((d) => ({ id: d.id, title: d.data().title })));
-    };
-    fetchPerformances();
-  }, [profile]);
+    if (!profile || profile.email !== "dhdbs200@gmail.com" || !performanceId) return;
+    getDoc(doc(db, "performances", performanceId)).then((snap) => {
+      if (snap.exists()) {
+        setPerformanceTitle(snap.data().title);
+      }
+    });
+  }, [profile, performanceId]);
 
   if (loading || !profile || profile.email !== "dhdbs200@gmail.com") {
     return (
@@ -73,11 +64,6 @@ export default function UploadSchedulePage() {
       </div>
     );
   }
-
-  const filteredPerformances = performances.filter((p) =>
-    p.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  const selectedPerformance = performances.find((p) => p.id === selectedPerformanceId);
 
   // ── 이미지 추출 모드 핸들러 ──
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,18 +100,15 @@ export default function UploadSchedulePage() {
   };
 
   const handleImageSave = async () => {
-    if (!extractedSchedules || !user || !selectedPerformanceId) {
-      setImageError("공연을 먼저 선택해주세요.");
-      return;
-    }
+    if (!extractedSchedules || !user) return;
     setImageSaving(true);
     setImageError(null);
     try {
       await Promise.all(
         extractedSchedules.map((s) =>
           addDoc(collection(db, "schedules"), {
-            performanceId: selectedPerformanceId,
-            performanceTitle: selectedPerformance?.title,
+            performanceId,
+            performanceTitle,
             date: s.date,
             time: s.time,
             cast: s.cast,
@@ -158,10 +141,7 @@ export default function UploadSchedulePage() {
   };
 
   const handleManualSave = async () => {
-    if (!user || !selectedPerformanceId) {
-      setManualError("공연을 먼저 선택해주세요.");
-      return;
-    }
+    if (!user) return;
     if (manualSchedules.length === 0) {
       setManualError("등록할 스케줄이 없어요.");
       return;
@@ -172,8 +152,8 @@ export default function UploadSchedulePage() {
       await Promise.all(
         manualSchedules.map((s) =>
           addDoc(collection(db, "schedules"), {
-            performanceId: selectedPerformanceId,
-            performanceTitle: selectedPerformance?.title,
+            performanceId,
+            performanceTitle,
             date: s.date,
             time: s.time,
             cast: s.cast,
@@ -194,66 +174,32 @@ export default function UploadSchedulePage() {
     }
   };
 
-  // 공연 선택 드롭다운 (공용)
-  const PerformanceSelector = () => (
-    <div className="space-y-2">
-      <label className="text-xs font-bold uppercase tracking-wider text-zinc-500">공연 선택</label>
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setShowDropdown(!showDropdown)}
-          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm outline-none focus:border-rose-400 dark:border-zinc-700 dark:bg-zinc-900"
-        >
-          {selectedPerformance ? selectedPerformance.title : "공연을 선택해주세요"}
-        </button>
-        {showDropdown && (
-          <div className="absolute top-full z-20 mt-2 w-full rounded-xl border border-zinc-200 bg-white p-2 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
-            <input
-              type="text"
-              placeholder="공연 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="mb-2 w-full rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-base outline-none dark:border-zinc-800 dark:bg-zinc-800"
-            />
-            <div className="max-h-48 overflow-y-auto">
-              {filteredPerformances.length > 0 ? (
-                filteredPerformances.map((perf) => (
-                  <button
-                    key={perf.id}
-                    onClick={() => { setSelectedPerformanceId(perf.id); setShowDropdown(false); }}
-                    className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-rose-50 dark:hover:bg-rose-900/20 ${selectedPerformanceId === perf.id ? "bg-rose-50 font-bold text-rose-500 dark:bg-rose-900/30" : ""}`}
-                  >
-                    {perf.title}
-                  </button>
-                ))
-              ) : (
-                <p className="px-3 py-2 text-xs text-zinc-400">검색 결과가 없습니다.</p>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} userProfile={profile} />
 
       <header className="sticky top-0 z-10 flex items-center justify-between bg-white/80 px-6 py-4 backdrop-blur-md dark:bg-zinc-900/80">
         <button
-          onClick={() => setIsSidebarOpen(true)}
+          onClick={() => router.push(`/manage-schedule/${performanceId}`)}
           className="rounded-xl p-2 text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
         >
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">스케줄 업로드</h1>
+        <h1 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">스케줄 추가</h1>
         <div className="w-10" />
       </header>
 
       <main className="mx-auto w-full max-w-xl px-6 py-6 space-y-6">
+        {/* 공연명 */}
+        {performanceTitle && (
+          <div className="rounded-2xl bg-white px-4 py-3 shadow-sm dark:bg-zinc-900">
+            <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">공연</p>
+            <p className="mt-1 font-semibold text-zinc-900 dark:text-white">{performanceTitle}</p>
+          </div>
+        )}
+
         {/* 탭 */}
         <div className="flex rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800">
           <button
@@ -314,8 +260,6 @@ export default function UploadSchedulePage() {
 
             {extractedSchedules && (
               <div className="space-y-6">
-                <PerformanceSelector />
-
                 <div className="space-y-2">
                   <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                     추출된 스케줄 ({extractedSchedules.length}건)
@@ -332,12 +276,12 @@ export default function UploadSchedulePage() {
 
                 {imageSaved ? (
                   <div className="rounded-2xl bg-emerald-50 py-4 text-center text-sm font-bold text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
-                    ✨ {selectedPerformance?.title} 스케줄 저장 완료!
+                    ✨ {performanceTitle} 스케줄 저장 완료!
                   </div>
                 ) : (
                   <button
                     onClick={handleImageSave}
-                    disabled={imageSaving || !selectedPerformanceId}
+                    disabled={imageSaving}
                     className="w-full rounded-2xl bg-zinc-900 py-3.5 text-sm font-bold text-white transition-all hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-40 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
                   >
                     {imageSaving ? "저장 중..." : "최종 업데이트 하기"}
@@ -351,10 +295,8 @@ export default function UploadSchedulePage() {
         {/* ── 직접 입력 모드 ── */}
         {mode === "manual" && (
           <>
-            <PerformanceSelector />
-
             {/* 스케줄 입력 폼 */}
-            <div className="rounded-2xl bg-white p-5 shadow-sm space-y-4 dark:bg-zinc-900">
+            <div className="overflow-hidden rounded-2xl bg-white p-5 shadow-sm space-y-4 dark:bg-zinc-900">
               <p className="text-xs font-black uppercase tracking-wider text-zinc-400">스케줄 추가</p>
 
               <div className="grid grid-cols-2 gap-3">
@@ -364,17 +306,17 @@ export default function UploadSchedulePage() {
                     type="date"
                     value={manualDate}
                     onChange={(e) => setManualDate(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-rose-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                    className="box-border h-11 w-full appearance-none rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-rose-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                   />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-bold text-zinc-500">시간</label>
                   <input
                     type="text"
-                    placeholder="예: 14:00, 마티네"
+                    placeholder="예: 14:00"
                     value={manualTime}
                     onChange={(e) => setManualTime(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-rose-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                    className="box-border h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm outline-none focus:border-rose-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                   />
                 </div>
               </div>
@@ -459,12 +401,12 @@ export default function UploadSchedulePage() {
 
                 {manualSaved ? (
                   <div className="rounded-2xl bg-emerald-50 py-4 text-center text-sm font-bold text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
-                    ✨ {selectedPerformance?.title} 스케줄 저장 완료!
+                    ✨ {performanceTitle} 스케줄 저장 완료!
                   </div>
                 ) : (
                   <button
                     onClick={handleManualSave}
-                    disabled={manualSaving || !selectedPerformanceId}
+                    disabled={manualSaving}
                     className="w-full rounded-2xl bg-zinc-900 py-3.5 text-sm font-bold text-white transition-all hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-40 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
                   >
                     {manualSaving ? "저장 중..." : `${manualSchedules.length}개 스케줄 저장하기`}
