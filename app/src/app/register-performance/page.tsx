@@ -2,17 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { collection, addDoc, getDocs, orderBy, query, Timestamp, updateDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, orderBy, query, where, Timestamp, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/providers/AuthProvider";
 import Sidebar from "@/components/Sidebar";
 
 const PERFORMANCE_COLOR_OPTIONS = [
-  { key: "red",    label: "빨", swatch: "bg-red-500" },
+  { key: "red", label: "빨", swatch: "bg-red-500" },
   { key: "orange", label: "주", swatch: "bg-orange-500" },
   { key: "yellow", label: "노", swatch: "bg-yellow-400" },
-  { key: "green",  label: "초", swatch: "bg-green-500" },
-  { key: "blue",   label: "파", swatch: "bg-blue-500" },
+  { key: "green", label: "초", swatch: "bg-green-500" },
+  { key: "blue", label: "파", swatch: "bg-blue-500" },
   { key: "indigo", label: "남", swatch: "bg-indigo-500" },
   { key: "violet", label: "보", swatch: "bg-violet-500" },
 ];
@@ -41,6 +41,8 @@ export default function RegisterConcertPage() {
   const [error, setError] = useState<string | null>(null);
   const [performances, setPerformances] = useState<Performance[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Performance | null>(null);
 
   useEffect(() => {
     if (!loading && profile && profile.email !== "dhdbs200@gmail.com") {
@@ -91,6 +93,41 @@ export default function RegisterConcertPage() {
   const handleCancelEdit = () => {
     setEditingId(null);
     resetForm();
+  };
+
+  const handleDeleteClick = (p: Performance) => {
+    setDeleteTarget(p);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    const p = deleteTarget;
+    setDeleteTarget(null);
+    setDeletingId(p.id);
+    try {
+      // 관련 스케줄 삭제
+      const schedulesSnap = await getDocs(
+        query(collection(db, "schedules"), where("performanceId", "==", p.id))
+      );
+      // 관련 관람내역 삭제
+      const mySchedulesSnap = await getDocs(
+        query(collection(db, "mySchedules"), where("performanceId", "==", p.id))
+      );
+      await Promise.all([
+        ...schedulesSnap.docs.map((d) => deleteDoc(d.ref)),
+        ...mySchedulesSnap.docs.map((d) => deleteDoc(d.ref)),
+        deleteDoc(doc(db, "performances", p.id)),
+      ]);
+      setPerformances((prev) => prev.filter((item) => item.id !== p.id));
+      if (editingId === p.id) {
+        setEditingId(null);
+        resetForm();
+      }
+    } catch (err: any) {
+      alert(err.message || "삭제 실패");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -244,11 +281,10 @@ export default function RegisterConcertPage() {
                   key={key}
                   type="button"
                   onClick={() => { setSelectedColor(key); setSaved(false); }}
-                  className={`h-9 w-9 rounded-full transition-all active:scale-95 ${swatch} ${
-                    selectedColor === key
-                      ? "ring-2 ring-offset-2 ring-zinc-900 dark:ring-white dark:ring-offset-zinc-950"
-                      : "opacity-60 hover:opacity-100"
-                  }`}
+                  className={`h-9 w-9 rounded-full transition-all active:scale-95 ${swatch} ${selectedColor === key
+                    ? "ring-2 ring-offset-2 ring-zinc-900 dark:ring-white dark:ring-offset-zinc-950"
+                    : "opacity-60 hover:opacity-100"
+                    }`}
                 />
               ))}
             </div>
@@ -299,13 +335,23 @@ export default function RegisterConcertPage() {
                       </p>
                       <p className="text-xs text-zinc-400">{p.venue}</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(p)}
-                      className="shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white"
-                    >
-                      수정
-                    </button>
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(p)}
+                        className="rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-white"
+                      >
+                        수정
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteClick(p)}
+                        disabled={deletingId === p.id}
+                        className="rounded-lg px-3 py-1.5 text-xs font-bold text-rose-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                      >
+                        {deletingId === p.id ? "삭제 중..." : "삭제"}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -313,6 +359,39 @@ export default function RegisterConcertPage() {
           </div>
         )}
       </main>
+
+      {/* 삭제 확인 다이얼로그 */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="mx-6 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900">
+            <h3 className="text-base font-bold text-zinc-900 dark:text-white">
+              공연을 삭제할까요?
+            </h3>
+            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+              <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                &ldquo;{deleteTarget.title}&rdquo;
+              </span>
+              을(를) 삭제하면 등록된 스케줄과 관람내역도 모두 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="flex-1 rounded-xl bg-zinc-100 py-2.5 text-sm font-bold text-zinc-700 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                className="flex-1 rounded-xl bg-rose-500 py-2.5 text-sm font-bold text-white transition-colors hover:bg-rose-600"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
