@@ -201,7 +201,7 @@ export default function RegisterConcertPage() {
           </svg>
         </button>
         <h1 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
-          공연 등록
+          공연 관리
         </h1>
         <div className="w-10" />
       </header>

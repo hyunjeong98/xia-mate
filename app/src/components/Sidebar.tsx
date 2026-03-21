@@ -103,10 +103,12 @@ export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) 
                     : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
                     }`}
                 >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18V5l12-4v13" />
+                    <circle cx="6" cy="18" r="3" fill="currentColor" stroke="none" />
+                    <circle cx="18" cy="14" r="3" fill="currentColor" stroke="none" />
                   </svg>
-                  공연 등록
+                  공연 관리
                 </Link>
                 <Link
                   href="/admin-attendance"
