@@ -123,16 +123,16 @@ export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) 
                   관람 내역 관리
                 </Link>
                 <Link
-                  href="/upload-schedule"
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${pathname === "/upload-schedule"
+                  href="/manage-schedule"
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${pathname.startsWith("/manage-schedule")
                     ? "bg-rose-50 text-rose-500 dark:bg-rose-500/10"
                     : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800"
                     }`}
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  스케줄 업로드
+                  스케줄 관리
                 </Link>
               </>
             )}
@@ -145,7 +145,7 @@ export default function Sidebar({ isOpen, onClose, userProfile }: SidebarProps) 
               href="/my-page"
               className={`mb-2 flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800 ${pathname === "/my-page" ? "bg-zinc-50 dark:bg-zinc-800" : ""}`}
             >
-              <div className={`h-9 w-9 shrink-0 rounded-xl flex items-center justify-center text-white text-sm font-bold ${userProfile?.color || "bg-rose-500"}`}>
+              <div className={`h-9 w-9 shrink-0 rounded-xl flex items-center justify-center text-white text-sm font-bold ${userProfile?.color || "bg-slate-400"}`}>
                 {userProfile?.nickname?.charAt(0) || "U"}
               </div>
               <div className="min-w-0">

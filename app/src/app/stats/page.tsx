@@ -72,7 +72,7 @@ export default function StatsPage() {
           if (d.exists()) {
             userMap[d.id] = {
               nickname: d.data().nickname || "?",
-              color: d.data().color || "bg-rose-500",
+              color: d.data().color || "bg-slate-400",
             };
           }
         });
@@ -89,7 +89,7 @@ export default function StatsPage() {
             .map(([userId, count]) => ({
               userId,
               nickname: userMap[userId]?.nickname || "?",
-              color: userMap[userId]?.color || "bg-rose-500",
+              color: userMap[userId]?.color || "bg-slate-400",
               count,
             }))
             .sort((a, b) => b.count - a.count);

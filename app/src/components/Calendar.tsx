@@ -7,26 +7,6 @@ import { collection, addDoc, getDocs, getDoc, query, where, Timestamp, deleteDoc
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/providers/AuthProvider";
 
-const AVATAR_COLORS = [
-  "bg-rose-400",
-  "bg-pink-400",
-  "bg-fuchsia-400",
-  "bg-purple-400",
-  "bg-violet-400",
-  "bg-indigo-400",
-  "bg-blue-400",
-  "bg-sky-400",
-  "bg-cyan-400",
-  "bg-teal-400",
-  "bg-emerald-400",
-  "bg-green-400",
-  "bg-lime-500",
-  "bg-yellow-400",
-  "bg-amber-400",
-  "bg-orange-400",
-  "bg-red-400",
-  "bg-slate-400",
-];
 
 interface AttendeeInfo {
   initial: string;
@@ -95,13 +75,13 @@ export default function Calendar({ schedules }: CalendarProps) {
       );
 
       const userInfoMap: Record<string, { initial: string; nickname: string; color: string }> = {};
-      profileDocs.forEach((d, i) => {
+      profileDocs.forEach((d) => {
         if (d.exists()) {
           const nickname = d.data().nickname || "?";
           userInfoMap[d.id] = {
             initial: nickname.charAt(0),
             nickname,
-            color: d.data().color || AVATAR_COLORS[i % AVATAR_COLORS.length],
+            color: d.data().color || "bg-slate-400",
           };
         }
       });
@@ -140,7 +120,7 @@ export default function Calendar({ schedules }: CalendarProps) {
 
     const existingDocId = mySchedulesMap[s.id];
     const nickname = profile?.nickname || "?";
-    const color = profile?.color || AVATAR_COLORS[0];
+    const color = profile?.color || "bg-slate-400";
     const myAttendee: AttendeeInfo = { initial: nickname.charAt(0), nickname, userId: user.uid, color };
 
     try {
