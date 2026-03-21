@@ -42,7 +42,7 @@ const PERFORMANCE_BADGE_CLASSES: Record<string, string> = {
   blue: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
   indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400",
   violet: "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400",
-  black: "bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100",
+  black: "bg-zinc-600 text-white dark:bg-zinc-950 dark:text-white",
 };
 
 const DEFAULT_BADGE_CLASS = "bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-300";
@@ -228,14 +228,14 @@ export default function Calendar({ schedules }: CalendarProps) {
             <button
               onClick={() => setShowOnlyMine(prev => !prev)}
               className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition-colors ${showOnlyMine
-                  ? "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
-                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                ? "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
+                : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                 }`}
             >
               <div
                 className={`flex h-4 w-4 items-center justify-center rounded-[5px] border transition-colors ${showOnlyMine
-                    ? "border-rose-500 bg-rose-500 text-white dark:border-rose-400 dark:bg-rose-400"
-                    : "border-zinc-300 bg-transparent dark:border-zinc-600"
+                  ? "border-rose-500 bg-rose-500 text-white dark:border-rose-400 dark:bg-rose-400"
+                  : "border-zinc-300 bg-transparent dark:border-zinc-600"
                   }`}
               >
                 {showOnlyMine && (
@@ -311,8 +311,8 @@ export default function Calendar({ schedules }: CalendarProps) {
                   <div
                     key={idx}
                     className={`rounded-md py-0.5 text-center text-[9px] font-black md:text-[10px] ${s.performanceColor
-                        ? PERFORMANCE_BADGE_CLASSES[s.performanceColor] ?? DEFAULT_BADGE_CLASS
-                        : DEFAULT_BADGE_CLASS
+                      ? PERFORMANCE_BADGE_CLASSES[s.performanceColor] ?? DEFAULT_BADGE_CLASS
+                      : DEFAULT_BADGE_CLASS
                       }`}
                   >
                     {s.performanceTitle}
